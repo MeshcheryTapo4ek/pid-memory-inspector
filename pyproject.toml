@@ -1,0 +1,10 @@
+[project]
+name = "pid-memory-inspector"
+version = "0.1.0"
+description = "A lightweight Python toolkit for monitoring system and per-process memory usage over time based on Process IDs (PIDs)."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.10.3",
+    "pandas>=2.2.3",
+]

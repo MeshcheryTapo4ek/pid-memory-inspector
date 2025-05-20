@@ -1,0 +1,9 @@
+
+.venv/
+dumps/
+.vscode/
+__pycache__/
+*.py[cod]
+*.pyc
+rss_pid_plots/
+plots/
