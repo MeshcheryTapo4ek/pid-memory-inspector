@@ -1,0 +1,53 @@
+/* Container: 90% of viewport width, centered */
+.wrapper {
+  width: 90vw;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Process table layout */
+.proc-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.proc-table th,
+.proc-table td {
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Column widths (1-based index) */
+.proc-table th:nth-child(9),
+.proc-table td:nth-child(9) {
+  width: 40%; /* CMD */
+}
+
+.proc-table th:nth-child(6),
+.proc-table td:nth-child(6),
+.proc-table th:nth-child(7),
+.proc-table td:nth-child(7) {
+  width: 12%; /* rss_subtree_mean / rss_subtree_max */
+}
+
+/* Header styling */
+.proc-table th {
+  background: #f3f3f3;
+  font-weight: bold;
+}
+
+/* Mapping table layout */
+.mapping-table th:nth-child(1),
+.mapping-table td:nth-child(1) {
+  width: 20%;
+}
+
+.mapping-table th:nth-child(2),
+.mapping-table td:nth-child(2) {
+  width: 80%;
+}

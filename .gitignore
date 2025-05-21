@@ -7,3 +7,7 @@ __pycache__/
 *.pyc
 rss_pid_plots/
 plots/
+*.txt
+*.json
+*.csv
+*.png

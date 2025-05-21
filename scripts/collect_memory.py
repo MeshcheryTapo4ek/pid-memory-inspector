@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # scripts/collect_memory.py
+
 """
-Entrypoint: periodically dump system- and process-memory CSVs into dumps/time/.
+Run periodic memory collection and dump CSVs into dumps/time/.
 """
 
 import time
@@ -12,26 +13,28 @@ import pandas as pd
 from utils.memory import get_meminfo, get_process_info
 
 
-SLEEP_TIME = 600
+DEFAULT_SLEEP_SECONDS = 600
 
 
 def main() -> None:
-    outdir = Path('dumps/time')
+    """
+    Create target directory and periodically write system
+    and process memory metrics to timestamped CSV files.
+    """
+    outdir: Path = Path("dumps/time")
     outdir.mkdir(parents=True, exist_ok=True)
 
     while True:
-        timestamp = time.strftime('%Y%m%d_%H%M%S')
-        # System memory snapshot
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+
         df_sys = pd.DataFrame([get_meminfo()])
-        df_sys.to_csv(outdir / f'sys_mem_{timestamp}.csv', index=False)
+        df_sys.to_csv(outdir / f"sys_mem_{timestamp}.csv", index=False, encoding="utf-8")
 
-        # Per-process snapshot
         df_proc = get_process_info()
-        df_proc.to_csv(outdir / f'process_mem_{timestamp}.csv', index=False)
+        df_proc.to_csv(outdir / f"process_mem_{timestamp}.csv", index=False, encoding="utf-8")
 
-        # Sleep for 10 minutes
-        time.sleep(SLEEP_TIME)
+        time.sleep(DEFAULT_SLEEP_SECONDS)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

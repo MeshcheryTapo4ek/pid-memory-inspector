@@ -5,6 +5,11 @@ description = "A lightweight Python toolkit for monitoring system and per-proces
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.115.12",
     "matplotlib>=3.10.3",
     "pandas>=2.2.3",
+    "plotly>=6.1.1",
+    "pydantic>=2.11.4",
+    "pydantic-settings>=2.9.1",
+    "uvicorn>=0.34.2",
 ]

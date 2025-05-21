@@ -1,4 +1,5 @@
 # scripts/utils/parser.py
+
 """
 Utilities for locating CSV dumps and parsing their timestamps.
 """
@@ -6,6 +7,7 @@ Utilities for locating CSV dumps and parsing their timestamps.
 import os
 import glob
 from typing import List
+
 import pandas as pd
 
 
@@ -19,8 +21,9 @@ def find_csv_files(directory: str, pattern: str) -> List[str]:
 
 def parse_timestamp(path: str, prefix: str) -> pd.Timestamp:
     """
-    Extract a timestamp from `path` by removing `prefix` and '.csv',
-    then parsing with format 'YYYYMMDD_HHMMSS'.
+    Extract and parse timestamp from filename.
+
+    Assumes filename format: <prefix><YYYYMMDD_HHMMSS>.csv
     """
     base = os.path.basename(path)
     ts_str = base.replace(prefix, "").replace(".csv", "")

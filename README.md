@@ -1,124 +1,92 @@
-# pid-memory-inspector
+# PID Memory Inspector
 
-A minimal yet powerful toolkit to continuously collect and deeply analyze system and per-process memory usage on Linux. This repository automates:
-
-- Scheduled snapshots of **system-wide** memory stats from `/proc/meminfo`.
-- Periodic captures of **every running process**’s RSS and VSZ via `ps`.
-- Storage of raw data in **timestamped CSV files** for auditability.
-- Analysis scripts that compute advanced metrics, generate summary tables, and produce publication-quality plots.
+**PID Memory Inspector** is a powerful visualization and diagnostics tool for tracking memory usage per process over time — with full support for process trees and snapshots.
 
 ---
 
-## 🚀 Features
+## ✨ Features
 
-1. **Automated Data Collection**  
-   - **`collect_memory.py`**: Daemon-style script that every 10 minutes:
-     - Reads `/proc/meminfo` and writes selected fields in MB to `dumps/time/sys_mem_<timestamp>.csv`.
-     - Executes `ps -eo pid,ppid,user,rss,vsz,cmd` and writes to `dumps/time/process_mem_<timestamp>.csv`.
-
-2. **Rich System Analysis**  
-   - **Metrics computed**:
-     - **RAM Used (htop method)**: `MemTotal - MemFree - Buffers - Cached - SReclaimable`.
-     - **Swap Used**: `SwapTotal - SwapFree`.
-     - **Total RAM Usage %**: `RAM Used / MemTotal * 100`.
-   - **Outputs**:
-     - `plots/system/system_metrics.csv` — tabular export of all computed metrics.
-     - Time-series plots:
-       - `ram_used_htop.png`
-       - `swap_used.png`
-       - `ram_vs_swap.png`
-       - `ram_used_pct.png`
-
-3. **Comprehensive Process Analysis**  
-   - **Metrics computed**:
-     - **Per-PID RSS Spread**: Difference between the maximum and minimum RSS observed.
-   - **Outputs**:
-     - `plots/processes/top10_rss_spread.csv` — top‑10 processes by RSS spread, with columns: `PID`, `min_RSS`, `max_RSS`, `spread`, `CMD`.
-     - Individual PID time-series plots: `plots/processes/rss_pid_<PID>.png`.
-
-4. **Modular Utility Libraries**  
-   - **`scripts/utils/parser.py`**: Discover CSV files and parse their timestamps.
-   - **`scripts/utils/system_analysis.py`**: Load system CSVs, compute metrics, and plotting functions.
-   - **`scripts/utils/process_analysis.py`**: Load process CSVs, compute spreads, and generate per-PID plots.
-
-5. **Extensible & Configurable**  
-   - All **intervals**, **paths**, and **patterns** are configurable via constants at the top of each script.
-   - Easy to add new metrics or filters by editing utility modules.
-   - Modular design keeps **collection**, **analysis**, and **visualization** separate, facilitating tests and extensions.
+- 📈 Live-like graphs of RAM and Swap usage
+- 🌲 Tree-based process snapshots at any point in time
+- 🔍 Drill-down into any PID: its own memory + all children
+- 📊 Graphs: own RSS, subtree RSS, children trends
+- 🧠 Filter by lifetime, RSS thresholds, subtree memory
+- 🧭 Per-level tree exploration (level 0 / 1 / 2 / ...)
+- 🔗 Clickable PID / PPID navigation
+- 📎 Auto-aggregated summaries and stats
+- 📁 Works with CSV dumps from `dumps/time/`
 
 ---
 
-## 📂 Project Structure
+## 🚀 How it works
 
-```
-.
-├── .gitignore
-├── Makefile                     # run, lint, test targets
-├── requirements.txt             # pandas, matplotlib
-├── requirements-dev.txt         # pytest, black, ruff, mypy
-├── dumps/
-│   └── time/                    # CSV snapshots
-├── plots/
-│   ├── system/                  # system analysis outputs
-│   └── processes/               # process analysis outputs
-└── scripts/
-    ├── collect_memory.py        # entrypoint for data collection
-    ├── analyze_system.py        # entrypoint for system analysis
-    ├── analyze_processes.py     # entrypoint for process analysis
-    └── utils/
-        ├── __init__.py
-        ├── parser.py            # helpers for file discovery & timestamp parsing
-        ├── system_analysis.py   # system metrics & plotting utilities
-        └── process_analysis.py  # process metrics & plotting utilities
-```
+1. **Collect memory usage dumps** with:
+   ```bash
+   python scripts/collect_memory.py
+   ```
+   This periodically creates:
+   - `sys_mem_*.csv` — system metrics (`/proc/meminfo`)
+   - `process_mem_*.csv` — processes (`ps` dump)
+
+2. **Run the app**:
+   ```bash
+   make run
+   # or
+   uvicorn src.app:create_app --reload --factory
+   ```
+
+3. **Open in browser**:
+   [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## 📝 Data Collection (`collect_memory.py`)
+## 🧩 Interface overview
 
-- **Interval**: default 10 minutes (`600s`), configurable at the top of the script.
-- **Output Path**: `dumps/time`, created if missing.
-- **System CSV**:  
-  - Filename: `sys_mem_<YYYYMMDD_HHMMSS>.csv`  
-  - Columns: `MemTotal_MB`, `MemFree_MB`, `MemAvailable_MB`, …, `HugePages_Free`.
-- **Process CSV**:  
-  - Filename: `process_mem_<YYYYMMDD_HHMMSS>.csv`  
-  - Columns: `PID`, `PPID`, `USER`, `RSS_MB`, `VSZ_MB`, `CMD`.
+- `/api/v1/` — Home dashboard: RAM + Swap graphs
+- `/api/v1/snapshot/level?lvl=N` — Processes at level N
+- `/api/v1/snapshot/pid?pid=...` — Explore subtree of a given PID
+- `/api/v1/snapshot/pid/plot?pid=...` — Graphs + stats for PID + children
+
+All views are interactive, filterable, and linked via PID navigation.
 
 ---
 
-## 📊 System Analysis (`analyze_system.py`)
+## 🔧 Project structure
 
-1. **Discovery**: finds all `sys_mem_*.csv` under `dumps/time`.
-2. **Metrics**: invokes `utils.system_analysis.load_and_compute_metrics()`.
-3. **Summary**: prints total time span and duration.
-4. **Exports**:
-   - Raw metrics CSV: `plots/system/system_metrics.csv`.
-   - Time-series plots:  
-     - `ram_used_htop.png`  
-     - `swap_used.png`  
-     - `ram_vs_swap.png`  
-     - `ram_used_pct.png`
+- `scripts/collect_memory.py` — CSV memory dumper
+- `src/application/` — orchestration layer (MetricsService)
+- `src/domain/` — core logic: tree stats, filters, timelines
+- `src/interfaces/web/` — FastAPI routes, HTML + Plotly
+- `static/mem.css` — table styling
 
 ---
 
-## 🔍 Process Analysis (`analyze_processes.py`)
+## 🤖 Tech stack
 
-1. **Discovery**: finds all `process_mem_*.csv` under `dumps/time`.
-2. **Aggregation**: loads and concatenates all snapshots via `utils.process_analysis.load_all_records()`.
-3. **Spread Calculation**: groups by `PID`, computing `min_RSS`, `max_RSS`, `spread`, and captures first `CMD`.
-4. **Exports**:
-   - Top-10 CSV: `plots/processes/top10_rss_spread.csv`.
-   - Console table of top-10 processes.
-   - Per-PID plots: `plots/processes/rss_pid_<PID>.png`.
+- **Python 3.11** + FastAPI
+- **Pandas** for data handling
+- **Plotly** for visualizations
+- **PureCSS** for lightweight styling
+- Custom layered architecture
 
 ---
 
-## ✨ Extending the Toolkit
+## 🗂️ Example filters
 
-- **Add new metrics**: modify `load_and_compute_metrics()` or `compute_rss_spread()`.  
-- **Custom filters**: extend `analyze_processes.py` with substring filters on `CMD`.  
-- **Integration**: ingest CSVs into BI tools or dashboards.  
-- **Alerts**: wrap analysis into cronjobs or monitoring alerts for unusual memory spikes.
+- `lifetime ≥ 300s`
+- `RSS ≥ 100 MB`
+- `subtree_rss ≥ 500 MB`
 
 ---
+
+## 🔮 Future ideas
+
+- [ ] Per-process `Swap:` from `/proc/<pid>/smaps_rollup`
+- [ ] CGroup-aware memory rollups
+- [ ] Export to JSON / PNG / CSV
+- [ ] Alerting on anomalies (spikes, leaks)
+
+---
+
+Made with ♥ for anyone who's ever had to answer:  
+> *"Wait... what process is eating all the RAM?"*
